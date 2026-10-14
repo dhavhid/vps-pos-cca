@@ -1,19 +1,20 @@
-# colegiaturas.com — stack CCA.
+# colegiaturas.com — stack CCA. Plantilla: edge_nginx la renderiza con envsubst al arrancar;
+# los hostnames salen de DOMAIN_PREFIX vía scripts/hosts.sh (stage.colegiaturas.com, stageweb...).
 #
-#   colegiaturas.com / www          -> placeholder de mantenimiento (vps/static/colegiaturas)
-#   web.colegiaturas.com            -> cca_web:80     (Astro estático)
-#   cms-web.colegiaturas.com        -> cca_cms:1337   (Strapi)
-#   portal-padres.colegiaturas.com  -> cca_portal:3000 (Portal Familiar)
+#   ${CCA_APEX} / ${CCA_WWW} -> placeholder de mantenimiento (vps/static/colegiaturas)
+#   ${CCA_WEB}    -> cca_web:80      (Astro estático)
+#   ${CCA_CMS}    -> cca_cms:1337    (Strapi)
+#   ${CCA_PORTAL} -> cca_portal:3000 (Portal Familiar)
 #
-# Certificados: live/colegiaturas.com (apex + www), live/web.colegiaturas.com,
-#               live/cms-web.colegiaturas.com, live/portal-padres.colegiaturas.com
+# Certificados (lineage = hostname, ver scripts/init-ssl.sh):
+#   live/${CCA_APEX} (apex + www), live/${CCA_WEB}, live/${CCA_CMS}, live/${CCA_PORTAL}
 
 # HTTP -> HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name colegiaturas.com www.colegiaturas.com web.colegiaturas.com
-                cms-web.colegiaturas.com portal-padres.colegiaturas.com;
+    server_name ${CCA_APEX} ${CCA_WWW} ${CCA_WEB}
+                ${CCA_CMS} ${CCA_PORTAL};
 
     include /etc/nginx/snippets/acme.conf;
 
@@ -26,10 +27,10 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name colegiaturas.com www.colegiaturas.com;
+    server_name ${CCA_APEX} ${CCA_WWW};
 
-    ssl_certificate /etc/letsencrypt/live/colegiaturas.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/colegiaturas.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${CCA_APEX}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${CCA_APEX}/privkey.pem;
     include /etc/nginx/snippets/ssl.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
@@ -45,15 +46,15 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name web.colegiaturas.com;
+    server_name ${CCA_WEB};
 
-    ssl_certificate /etc/letsencrypt/live/web.colegiaturas.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/web.colegiaturas.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${CCA_WEB}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${CCA_WEB}/privkey.pem;
     include /etc/nginx/snippets/ssl.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
-    access_log /var/log/nginx/web.colegiaturas.com.access.log main;
-    error_log /var/log/nginx/web.colegiaturas.com.error.log;
+    access_log /var/log/nginx/${CCA_WEB}.access.log main;
+    error_log /var/log/nginx/${CCA_WEB}.error.log;
 
     location / {
         set $upstream http://cca_web:80;
@@ -66,14 +67,14 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name cms-web.colegiaturas.com;
+    server_name ${CCA_CMS};
 
-    ssl_certificate /etc/letsencrypt/live/cms-web.colegiaturas.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/cms-web.colegiaturas.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${CCA_CMS}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${CCA_CMS}/privkey.pem;
     include /etc/nginx/snippets/ssl.conf;
 
-    access_log /var/log/nginx/cms-web.colegiaturas.com.access.log main;
-    error_log /var/log/nginx/cms-web.colegiaturas.com.error.log;
+    access_log /var/log/nginx/${CCA_CMS}.access.log main;
+    error_log /var/log/nginx/${CCA_CMS}.error.log;
 
     # Subida de medios desde el admin.
     client_max_body_size 100M;
@@ -89,10 +90,10 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name portal-padres.colegiaturas.com;
+    server_name ${CCA_PORTAL};
 
-    ssl_certificate /etc/letsencrypt/live/portal-padres.colegiaturas.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/portal-padres.colegiaturas.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${CCA_PORTAL}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${CCA_PORTAL}/privkey.pem;
     include /etc/nginx/snippets/ssl.conf;
 
     add_header X-Content-Type-Options "nosniff" always;

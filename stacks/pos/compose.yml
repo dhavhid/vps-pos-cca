@@ -1,8 +1,9 @@
 # Stack POS (sistemasrm.com). Mismo comportamiento que pos/backend/infra/docker-compose.yml,
 # pero sin puertos publicados al host: todo el tráfico entra por edge_nginx.
+# Hostnames según DOMAIN_PREFIX (.env), p. ej. con DOMAIN_PREFIX=stage:
 #
-#   pos_api    -> posapi.sistemasrm.com  (NestJS, :3000)
-#   pos_static -> pos.sistemasrm.com     (Expo web, :3001)
+#   pos_api    -> stageposapi.sistemasrm.com  (NestJS, :3000)
+#   pos_static -> stagepos.sistemasrm.com     (Expo web, :3001)
 
 x-logging: &default-logging
   driver: "json-file"
@@ -46,6 +47,9 @@ services:
       - /app/node_modules
     env_file:
       - path: ${POS_BACKEND_DIR}/.env.production
+    environment:
+      # Se hornea en el bundle (expo export). Gana sobre el .env del repo del frontend.
+      EXPO_PUBLIC_API_URL: https://${DOMAIN_PREFIX:-}posapi.sistemasrm.com
     command: sh -c "yarn install --frozen-lockfile && yarn expo export --platform web --output-dir ./dist && npx serve -s dist -l 3001"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/"]

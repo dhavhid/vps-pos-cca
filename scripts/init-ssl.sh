@@ -2,7 +2,7 @@
 # Prepara TLS para todos los dominios. Idempotente: solo emite lo que falta.
 #
 #   scripts/init-ssl.sh                 # todos los lineages sin certificado real
-#   scripts/init-ssl.sh web.colegiaturas.com   # solo ese lineage
+#   scripts/init-ssl.sh stageweb.colegiaturas.com   # solo ese lineage (nombre = hostname)
 #   STAGING=1 scripts/init-ssl.sh       # prueba contra Let's Encrypt staging
 #
 # Pasos: dhparam -> certificados dummy (para que nginx arranque) -> nginx up ->
@@ -10,15 +10,16 @@
 # Requiere que el DNS de cada dominio ya apunte a este servidor.
 source "$(dirname "$0")/lib.sh"
 
-# lineage=dominio1,dominio2,...  (el lineage es el nombre en certbot/conf/live/)
+# lineage=dominio1,dominio2,...  (el lineage es el nombre en certbot/conf/live/).
+# Hostnames según DOMAIN_PREFIX (scripts/hosts.sh); deben coincidir con nginx/templates/.
 LINEAGES=(
-  "sistemasrm.com=sistemasrm.com,www.sistemasrm.com"
-  "pos.sistemasrm.com=pos.sistemasrm.com"
-  "posapi.sistemasrm.com=posapi.sistemasrm.com"
-  "colegiaturas.com=colegiaturas.com,www.colegiaturas.com"
-  "web.colegiaturas.com=web.colegiaturas.com"
-  "cms-web.colegiaturas.com=cms-web.colegiaturas.com"
-  "portal-padres.colegiaturas.com=portal-padres.colegiaturas.com"
+  "$SRM_APEX=$SRM_APEX,$SRM_WWW"
+  "$SRM_POS=$SRM_POS"
+  "$SRM_POSAPI=$SRM_POSAPI"
+  "$CCA_APEX=$CCA_APEX,$CCA_WWW"
+  "$CCA_WEB=$CCA_WEB"
+  "$CCA_CMS=$CCA_CMS"
+  "$CCA_PORTAL=$CCA_PORTAL"
 )
 
 : "${LE_EMAIL:?falta LE_EMAIL en .env}"

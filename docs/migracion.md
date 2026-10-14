@@ -14,10 +14,12 @@ Rutas asumidas en el VPS (configurables en `.env`):
 
 ## 0. Antes del día del corte
 
-1. **DNS** (registros A → IP del VPS):
-   `colegiaturas.com`, `www.colegiaturas.com`, `web.colegiaturas.com`,
-   `cms-web.colegiaturas.com`, `portal-padres.colegiaturas.com`.
-   Verificar: `dig +short cms-web.colegiaturas.com`.
+1. **DNS** (registros A → IP del VPS) de todos los hostnames según `DOMAIN_PREFIX`
+   (tabla en README). En stage: `stage.sistemasrm.com`, `stagewww.sistemasrm.com`,
+   `stagepos.sistemasrm.com`, `stageposapi.sistemasrm.com`, `stage.colegiaturas.com`,
+   `stagewww.colegiaturas.com`, `stageweb.colegiaturas.com`, `stagecms-web.colegiaturas.com`,
+   `stageportal-padres.colegiaturas.com`.
+   Verificar: `dig +short stagecms-web.colegiaturas.com`.
 2. **Postgres DO**: seguir `docs/postgres-do.md` §1–§4 (trusted sources, CA, base y usuario de
    Strapi, restaurar `strapi-cms-20261012.sql`, usuario del portal). La base del colegio la
    migra el dueño del proyecto.
@@ -42,40 +44,41 @@ Rutas asumidas en el VPS (configurables en `.env`):
 
 ```bash
 cd /vps
-scripts/migrate-from-pos.sh                # copia certificados + dhparam de pos
+scripts/migrate-from-pos.sh                # copia certificados + dhparam de pos (los certs solo
+                                           # sirven con DOMAIN_PREFIX vacío; en stage se emiten todos)
 
 # Parar el stack viejo (libera 80/443 y los nombres de contenedor)
 docker compose -f /pos-backend/infra/docker-compose.yml down
 
-scripts/init-ssl.sh                        # dummies faltantes + nginx/certbot arriba + emite colegiaturas.com
-                                           # (sistemasrm.com ya viene migrado; nginx no arranca sin todos los certs)
+scripts/init-ssl.sh                        # dummies faltantes + nginx/certbot arriba + emite lo que falte
+                                           # (nginx no arranca sin todos los certs)
 scripts/deploy.sh shared                   # jasperservice
 scripts/deploy.sh pos                      # pos_api + pos_static (compilan al arrancar: varios minutos)
 ```
 
-`pos_api` y `pos_static` compilan al arrancar igual que antes, así que pos.sistemasrm.com y
-posapi.sistemasrm.com devuelven 502 hasta que terminan. Para reducir esa ventana, levantar pos
+`pos_api` y `pos_static` compilan al arrancar igual que antes, así que `$SRM_POS` y
+`$SRM_POSAPI` (stagepos/stageposapi en stage) devuelven 502 hasta que terminan. Para reducir esa ventana, levantar pos
 primero y luego el resto: el orden de arriba ya lo hace.
 
 ## 2. CCA
 
 ```bash
-scripts/deploy.sh cca     # build cms + portal, espera https://cms-web.colegiaturas.com/_health, build web
+scripts/deploy.sh cca     # build cms + portal, espera https://$CCA_CMS/_health, build web
 ```
 
 Si es el primer arranque del CMS sin datos restaurados: entrar a
-`https://cms-web.colegiaturas.com/admin`, crear el admin, cargar contenido y luego
+`https://<CCA_CMS>/admin` (stagecms-web.colegiaturas.com en stage), crear el admin, cargar contenido y luego
 `scripts/rebuild-web.sh`.
 
 ## 3. Verificación
 
 ```bash
-for u in sistemasrm.com www.sistemasrm.com pos.sistemasrm.com posapi.sistemasrm.com/health \
-         colegiaturas.com web.colegiaturas.com cms-web.colegiaturas.com/_health \
-         portal-padres.colegiaturas.com; do
+set -a; . ./.env; . scripts/hosts.sh; set +a     # SRM_* / CCA_* según DOMAIN_PREFIX
+for u in $SRM_APEX $SRM_WWW $SRM_POS $SRM_POSAPI/health \
+         $CCA_APEX $CCA_WEB $CCA_CMS/_health $CCA_PORTAL; do
   printf '%-45s %s\n' "$u" "$(curl -s -o /dev/null -w '%{http_code}' "https://$u")"
 done
-curl -s -o /dev/null -w '%{http_code}\n' https://portal-padres.colegiaturas.com/api/health  # 404 esperado
+curl -s -o /dev/null -w '%{http_code}\n' "https://$CCA_PORTAL/api/health"  # 404 esperado
 
 docker compose ps
 docker compose run --rm --entrypoint certbot certbot renew --dry-run

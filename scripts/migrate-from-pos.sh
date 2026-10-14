@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Copia los certificados Let's Encrypt y el dhparam del despliegue anterior de pos
 # (${POS_BACKEND_DIR}/infra/ssl) a vps/, para no re-emitir los de sistemasrm.com.
+# Solo útil en producción (DOMAIN_PREFIX vacío): en stage los hostnames son otros y
+# scripts/init-ssl.sh emite sus certificados.
 #
 #   scripts/migrate-from-pos.sh          # falla si vps/certbot/conf ya tiene certificados
 #   scripts/migrate-from-pos.sh --force  # sobrescribe

@@ -23,20 +23,28 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/snippets:/etc/nginx/snippets:ro
-      - ./nginx/sites:/etc/nginx/conf.d:ro
+      # Plantillas por dominio; nginx/entrypoint.sh las renderiza en conf.d (tmpfs) al arrancar.
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/entrypoint.sh:/vps/entrypoint.sh:ro
+      - ./scripts/hosts.sh:/vps/hosts.sh:ro
       - ./nginx/dhparam:/etc/nginx/dhparam:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
-      # Website de sistemasrm.com: se sirve directo desde el repo de pos.
+      # Website de sistemasrm.com (${SRM_APEX}): se sirve directo desde el repo de pos.
       - ${POS_BACKEND_DIR:?falta POS_BACKEND_DIR en .env}/infra/website:/var/www/sistemasrm:ro
       # Placeholder de mantenimiento para colegiaturas.com / www.
       - ./static/colegiaturas:/var/www/colegiaturas:ro
       - nginx_logs:/var/log/nginx
-    # Recarga periódica para tomar los certificados renovados por certbot
-    # (certbot no tiene acceso al socket de Docker para recargar nginx él mismo).
-    command: >-
-      /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done &
-      exec nginx -g "daemon off;"'
+    # conf.d vacío: descarta el default.conf de la imagen (choca con 00-default).
+    tmpfs:
+      - /etc/nginx/conf.d
+    environment:
+      # Vacío = producción; "stage" = stage.sistemasrm.com, stagepos.sistemasrm.com, ...
+      DOMAIN_PREFIX: ${DOMAIN_PREFIX:-}
+      # envsubst solo toca nuestras variables, no las de nginx ($host, $upstream, ...).
+      NGINX_ENVSUBST_FILTER: ^(SRM|CCA)_
+    # Calcula hostnames, arranca el reload periódico (6h) y ejecuta el entrypoint oficial.
+    command: ["/bin/sh", "/vps/entrypoint.sh"]
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s

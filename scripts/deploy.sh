@@ -32,7 +32,7 @@ deploy_pos() {
 
 deploy_web() {
   # cca_web hornea el contenido de Strapi en build time desde la URL PÚBLICA del CMS.
-  wait_url "${STRAPI_PUBLIC_URL:-https://cms-web.colegiaturas.com}/_health" 180
+  wait_url "https://$CCA_CMS/_health" 180
   info "Rebuild cca_web (--no-cache: el contenido viene de Strapi, Docker no ve el cambio)"
   dc build --no-cache cca_web
   dc up -d --no-deps cca_web

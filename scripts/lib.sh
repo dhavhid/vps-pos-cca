@@ -9,6 +9,8 @@ if [ ! -f .env ]; then
   exit 1
 fi
 set -a; . ./.env; set +a
+# SRM_* / CCA_*: hostnames públicos según DOMAIN_PREFIX.
+. "$VPS_DIR/scripts/hosts.sh"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 info() { echo -e "${YELLOW}==> $*${NC}"; }

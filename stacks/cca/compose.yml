@@ -1,11 +1,13 @@
 # Stack CCA (colegiaturas.com). Basado en cca/docker-compose.yml, sin Caddy (lo reemplaza
 # edge_nginx) y sin Postgres local (Strapi y Portal usan el cluster de DigitalOcean).
 #
-#   cca_cms    -> cms-web.colegiaturas.com        (Strapi, :1337)
-#   cca_web    -> web.colegiaturas.com            (Astro estático servido por nginx, :80)
-#   cca_portal -> portal-padres.colegiaturas.com  (NestJS + SPA, :3000)
+# Hostnames según DOMAIN_PREFIX (.env), p. ej. con DOMAIN_PREFIX=stage:
 #
-# cca_web hornea el contenido de Strapi EN BUILD TIME desde STRAPI_PUBLIC_URL (URL pública),
+#   cca_cms    -> stagecms-web.colegiaturas.com        (Strapi, :1337)
+#   cca_web    -> stageweb.colegiaturas.com            (Astro estático servido por nginx, :80)
+#   cca_portal -> stageportal-padres.colegiaturas.com  (NestJS + SPA, :3000)
+#
+# cca_web hornea el contenido de Strapi EN BUILD TIME desde la URL pública del CMS,
 # así que cca_cms debe estar en línea con su certificado antes de construir cca_web.
 # scripts/deploy.sh cca y scripts/rebuild-web.sh respetan ese orden.
 
@@ -57,7 +59,7 @@ services:
       context: ${CCA_DIR}
       dockerfile: apps/web/Dockerfile
       args:
-        STRAPI_URL: ${STRAPI_PUBLIC_URL:-https://cms-web.colegiaturas.com}
+        STRAPI_URL: https://${DOMAIN_PREFIX:-}cms-web.colegiaturas.com
     image: vps/cca-web:latest
     container_name: cca_web
     restart: always
@@ -75,6 +77,7 @@ services:
     env_file:
       - ./stacks/cca/portal.env
     environment:
+      PORTAL_PUBLIC_URL: https://${DOMAIN_PREFIX:-}portal-padres.colegiaturas.com
       NODE_EXTRA_CA_CERTS: /certs/do-postgres-ca.crt
     volumes:
       - *do-postgres-ca
