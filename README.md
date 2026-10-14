@@ -11,7 +11,7 @@ Postgres **no** corre aquí: todas las apps usan el cluster administrado de Digi
                  └───┬─────────┬───┘
        red vps_edge  │         │
    ┌─────────────────┘         └──────────────────┐
-   │ sistemasrm.com                                │ colegiaturas.com
+   │ sistemasrm.com                                │ aulasv.com
    │  apex / www → website estático               │  apex / www     → mantenimiento
    │  pos.       → pos_static:3001                 │  web.           → cca_web:80
    │  posapi.    → pos_api:3000                    │  cms-web.       → cca_cms:1337
@@ -37,7 +37,7 @@ Solo `edge_nginx` publica puertos. `jasperservice` es interno: cualquier contene
 | `stacks/pos/` | `pos_api` (`/pos-backend`), `pos_static` (`/pos-frontend`) |
 | `stacks/cca/` | `cca_cms`, `cca_web`, `cca_portal` (build desde `/cca`) |
 | `nginx/` | `nginx.conf`, `snippets/`, `templates/` (una plantilla por dominio), `entrypoint.sh` |
-| `static/colegiaturas/` | placeholder de mantenimiento de colegiaturas.com |
+| `static/colegiaturas/` | placeholder de mantenimiento de aulasv.com |
 | `scripts/` | `hosts.sh` (hostnames según `DOMAIN_PREFIX`), `deploy.sh`, `init-ssl.sh`, `migrate-from-pos.sh`, `rebuild-web.sh`, `backup.sh` |
 | `docs/` | `migracion.md` (corte desde el despliegue actual de pos), `postgres-do.md` |
 
@@ -73,11 +73,11 @@ en los builds). Regla: subdominio = `${DOMAIN_PREFIX}<sub>`, apex = `${DOMAIN_PR
 | www SRM (301) | stagewww.sistemasrm.com | www.sistemasrm.com |
 | POS frontend | stagepos.sistemasrm.com | pos.sistemasrm.com |
 | POS API | stageposapi.sistemasrm.com | posapi.sistemasrm.com |
-| CCA mantenimiento | stage.colegiaturas.com | colegiaturas.com |
-| www CCA | stagewww.colegiaturas.com | www.colegiaturas.com |
-| CCA web | stageweb.colegiaturas.com | web.colegiaturas.com |
-| CCA CMS | stagecms-web.colegiaturas.com | cms-web.colegiaturas.com |
-| Portal Familiar | stageportal-padres.colegiaturas.com | portal-padres.colegiaturas.com |
+| CCA mantenimiento | stage.aulasv.com | aulasv.com |
+| www CCA | stagewww.aulasv.com | www.aulasv.com |
+| CCA web | stageweb.aulasv.com | web.aulasv.com |
+| CCA CMS | stagecms-web.aulasv.com | cms-web.aulasv.com |
+| Portal Familiar | stageportal-padres.aulasv.com | portal-padres.aulasv.com |
 
 Ver los hostnames efectivos: `set -a; . ./.env; . scripts/hosts.sh; env | grep -E '^(SRM|CCA)_'`.
 

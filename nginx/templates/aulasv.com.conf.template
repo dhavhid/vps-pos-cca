@@ -1,5 +1,5 @@
-# colegiaturas.com — stack CCA. Plantilla: edge_nginx la renderiza con envsubst al arrancar;
-# los hostnames salen de DOMAIN_PREFIX vía scripts/hosts.sh (stage.colegiaturas.com, stageweb...).
+# aulasv.com — stack CCA. Plantilla: edge_nginx la renderiza con envsubst al arrancar;
+# los hostnames salen de DOMAIN_PREFIX vía scripts/hosts.sh (stage.aulasv.com, stageweb...).
 #
 #   ${CCA_APEX} / ${CCA_WWW} -> placeholder de mantenimiento (vps/static/colegiaturas)
 #   ${CCA_WEB}    -> cca_web:80      (Astro estático)

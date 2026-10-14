@@ -32,7 +32,7 @@ services:
       - ./certbot/www:/var/www/certbot:ro
       # Website de sistemasrm.com (${SRM_APEX}): se sirve directo desde el repo de pos.
       - ${POS_BACKEND_DIR:?falta POS_BACKEND_DIR en .env}/infra/website:/var/www/sistemasrm:ro
-      # Placeholder de mantenimiento para colegiaturas.com / www.
+      # Placeholder de mantenimiento para aulasv.com / www.
       - ./static/colegiaturas:/var/www/colegiaturas:ro
       - nginx_logs:/var/log/nginx
     # conf.d vacío: descarta el default.conf de la imagen (choca con 00-default).

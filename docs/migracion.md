@@ -16,10 +16,10 @@ Rutas asumidas en el VPS (configurables en `.env`):
 
 1. **DNS** (registros A → IP del VPS) de todos los hostnames según `DOMAIN_PREFIX`
    (tabla en README). En stage: `stage.sistemasrm.com`, `stagewww.sistemasrm.com`,
-   `stagepos.sistemasrm.com`, `stageposapi.sistemasrm.com`, `stage.colegiaturas.com`,
-   `stagewww.colegiaturas.com`, `stageweb.colegiaturas.com`, `stagecms-web.colegiaturas.com`,
-   `stageportal-padres.colegiaturas.com`.
-   Verificar: `dig +short stagecms-web.colegiaturas.com`.
+   `stagepos.sistemasrm.com`, `stageposapi.sistemasrm.com`, `stage.aulasv.com`,
+   `stagewww.aulasv.com`, `stageweb.aulasv.com`, `stagecms-web.aulasv.com`,
+   `stageportal-padres.aulasv.com`.
+   Verificar: `dig +short stagecms-web.aulasv.com`.
 2. **Postgres DO**: seguir `docs/postgres-do.md` §1–§4 (trusted sources, CA, base y usuario de
    Strapi, restaurar `strapi-cms-20261012.sql`, usuario del portal). La base del colegio la
    migra el dueño del proyecto.
@@ -67,7 +67,7 @@ scripts/deploy.sh cca     # build cms + portal, espera https://$CCA_CMS/_health,
 ```
 
 Si es el primer arranque del CMS sin datos restaurados: entrar a
-`https://<CCA_CMS>/admin` (stagecms-web.colegiaturas.com en stage), crear el admin, cargar contenido y luego
+`https://<CCA_CMS>/admin` (stagecms-web.aulasv.com en stage), crear el admin, cargar contenido y luego
 `scripts/rebuild-web.sh`.
 
 ## 3. Verificación

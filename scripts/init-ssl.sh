@@ -2,7 +2,7 @@
 # Prepara TLS para todos los dominios. Idempotente: solo emite lo que falta.
 #
 #   scripts/init-ssl.sh                 # todos los lineages sin certificado real
-#   scripts/init-ssl.sh stageweb.colegiaturas.com   # solo ese lineage (nombre = hostname)
+#   scripts/init-ssl.sh stageweb.aulasv.com   # solo ese lineage (nombre = hostname)
 #   STAGING=1 scripts/init-ssl.sh       # prueba contra Let's Encrypt staging
 #
 # Pasos: dhparam -> certificados dummy (para que nginx arranque) -> nginx up ->
