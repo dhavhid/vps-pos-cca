@@ -1,0 +1,10 @@
+.env
+stacks/**/*.env
+!stacks/**/*.env.example
+certbot/conf/
+certbot/www/
+nginx/dhparam/
+secrets/*
+!secrets/README.md
+backups/
+.DS_Store

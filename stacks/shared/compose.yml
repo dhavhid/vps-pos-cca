@@ -1,0 +1,32 @@
+# Servicios compartidos por todos los proyectos. Solo accesibles por la red interna
+# "services" (no se publican puertos ni hay server block en nginx).
+#
+#   jasperservice -> http://jasperservice:8080  (desde cualquier contenedor en "services")
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "3"
+
+services:
+  jasperservice:
+    build:
+      context: ${POS_BACKEND_DIR:?falta POS_BACKEND_DIR en .env}/services/jasperservice
+      dockerfile: ${POS_BACKEND_DIR}/infra/jasperserver/Dockerfile
+    image: vps/jasperservice:latest
+    platform: linux/amd64
+    container_name: jasperservice
+    restart: always
+    env_file:
+      - ./stacks/shared/jasper.env
+    mem_limit: ${JASPER_MEM_LIMIT:-1g}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+    networks:
+      - services

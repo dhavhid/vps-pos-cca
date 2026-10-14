@@ -1,0 +1,74 @@
+# Infraestructura unificada del VPS: un solo nginx (+ certbot) al frente de todos los stacks.
+#
+# Los stacks viven en stacks/<nombre>/compose.yml y se combinan vía COMPOSE_FILE en .env,
+# así que `docker compose <cmd>` desde este directorio opera sobre todo a la vez.
+# Todas las rutas relativas se resuelven contra este directorio (vps/).
+#
+# Postgres NO corre aquí: todas las apps usan el cluster administrado de DigitalOcean.
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "3"
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: edge_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ./nginx/sites:/etc/nginx/conf.d:ro
+      - ./nginx/dhparam:/etc/nginx/dhparam:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      # Website de sistemasrm.com: se sirve directo desde el repo de pos.
+      - ${POS_BACKEND_DIR:?falta POS_BACKEND_DIR en .env}/infra/website:/var/www/sistemasrm:ro
+      # Placeholder de mantenimiento para colegiaturas.com / www.
+      - ./static/colegiaturas:/var/www/colegiaturas:ro
+      - nginx_logs:/var/log/nginx
+    # Recarga periódica para tomar los certificados renovados por certbot
+    # (certbot no tiene acceso al socket de Docker para recargar nginx él mismo).
+    command: >-
+      /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done &
+      exec nginx -g "daemon off;"'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging: *default-logging
+    networks:
+      - edge
+
+  certbot:
+    image: certbot/certbot:v3.0.1
+    container_name: edge_certbot
+    restart: always
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >-
+      /bin/sh -c 'trap exit TERM; while :; do
+      certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h & wait $${!}; done'
+    logging: *default-logging
+    networks:
+      - edge
+
+volumes:
+  nginx_logs:
+
+networks:
+  # nginx <-> servicios publicados en internet.
+  edge:
+    name: vps_edge
+  # Red interna compartida: servicios de uso común (jasperservice) y sus consumidores.
+  services:
+    name: vps_services

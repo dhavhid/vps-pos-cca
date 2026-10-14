@@ -1,0 +1,58 @@
+# Stack POS (sistemasrm.com). Mismo comportamiento que pos/backend/infra/docker-compose.yml,
+# pero sin puertos publicados al host: todo el tráfico entra por edge_nginx.
+#
+#   pos_api    -> posapi.sistemasrm.com  (NestJS, :3000)
+#   pos_static -> pos.sistemasrm.com     (Expo web, :3001)
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "3"
+
+services:
+  pos_api:
+    image: node:20-alpine
+    container_name: pos_api
+    restart: always
+    working_dir: /app
+    volumes:
+      - ${POS_BACKEND_DIR:?falta POS_BACKEND_DIR en .env}:/app
+      - /app/node_modules
+    env_file:
+      - path: ${POS_BACKEND_DIR}/.env.production
+      # Overrides propios del VPS (p. ej. JASPER_URL). Opcional.
+      - path: ./stacks/pos/pos.env
+        required: false
+    command: sh -c "yarn install --frozen-lockfile --production=false && yarn migrate && yarn build && yarn start:prod"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 180s
+    logging: *default-logging
+    networks:
+      - edge
+      - services
+
+  pos_static:
+    image: node:24-alpine
+    container_name: pos_static
+    restart: always
+    working_dir: /app
+    volumes:
+      - ${POS_FRONTEND_DIR:?falta POS_FRONTEND_DIR en .env}:/app
+      - /app/node_modules
+    env_file:
+      - path: ${POS_BACKEND_DIR}/.env.production
+    command: sh -c "yarn install --frozen-lockfile && yarn expo export --platform web --output-dir ./dist && npx serve -s dist -l 3001"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 300s
+    logging: *default-logging
+    networks:
+      - edge
